@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.App as App
 import Html.Attributes exposing (..)
 import Html.Events as Events
+import Json.Decode as Json
 import Dict
 import Regex
 
@@ -125,16 +126,22 @@ tableBodyView { columns } { hiddenColumns, sortBy, sortOrder, filters } data =
         tbody [] rows
 
 
-
--- Going to need state and viewConfig
+onClose : String -> (State -> msg) -> State -> Attribute msg
+onClose hiddenColumn toMsg state =
+    let
+        newColumns = state.hiddenColumns ++ [hiddenColumn]
+        newState = { state | hiddenColumns = newColumns }
+    in
+        Events.on "click" <|  Json.map toMsg <| Json.succeed newState
 
 
 tableHeadView : ViewConfig data msg -> State -> Html msg
-tableHeadView { columns, canHide, canSort, canFilter } { hiddenColumns, sortBy, sortOrder } =
+tableHeadView { columns, canHide, canSort, canFilter, toMsg } state =
     let
-        closeButton =
+        { hiddenColumns, sortBy, sortOrder } = state
+        closeButton colName =
             if canHide then
-                i [ class "fa fa-close" ] [ text "X" ]
+                i [ class "fa fa-close", onClose colName toMsg state ] [ text "X" ]
             else
                 text ""
 
@@ -166,7 +173,7 @@ tableHeadView { columns, canHide, canSort, canFilter } { hiddenColumns, sortBy, 
 
         toTh col =
             th []
-                [ closeButton
+                [ closeButton col.name
                 , text col.name
                 , sortButton col
                 , br [] []

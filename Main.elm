@@ -51,6 +51,9 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of 
+        UpdateTableState newTableState ->
+            ( { model | tableState = newTableState }, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
 
