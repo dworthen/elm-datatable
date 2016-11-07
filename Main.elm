@@ -29,7 +29,7 @@ type alias Model =
 model : Model
 model =
     let
-        tableState = Table.State "Name" Table.Asc [("Name", "george bush")] ["Year"]
+        tableState = Table.State "Name" Table.Asc [] []
     in
         Model "Derek" tableState presidents
 

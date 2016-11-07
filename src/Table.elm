@@ -135,6 +135,22 @@ onClose hiddenColumn toMsg state =
         Events.on "click" <|  Json.map toMsg <| Json.succeed newState
 
 
+onSort : String -> (State -> msg) -> State -> Attribute msg
+onSort columnName toMsg state =
+    let
+        {sortBy, sortOrder} = state
+        newSortOrder =
+            if sortBy == columnName then
+                case sortOrder of
+                    Asc -> Desc
+                    Desc -> Asc
+            else
+                Asc
+        newState = { state | sortOrder = newSortOrder, sortBy = columnName }
+    in
+        Events.on "click" <| Json.map toMsg <| Json.succeed newState
+
+
 tableHeadView : ViewConfig data msg -> State -> Html msg
 tableHeadView { columns, canHide, canSort, canFilter, toMsg } state =
     let
@@ -161,7 +177,7 @@ tableHeadView { columns, canHide, canSort, canFilter, toMsg } state =
                     ]
             in
                 if canSort then
-                    i [ classList classes ] [ text "Sort" ]
+                    i [ classList classes, onSort col.name toMsg state ] [ text "Sort" ]
                 else
                     text ""
 
