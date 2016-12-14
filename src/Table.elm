@@ -5,6 +5,8 @@ import Html.App as App
 import Html.Attributes exposing (..)
 import Html.Events as Events
 import Json.Decode as Json
+import Json.Encode as JSEncode
+import String
 import Dict
 import Regex
 
@@ -95,7 +97,8 @@ type alias ViewConfig data msg =
 view : ViewConfig data msg -> State -> List data -> Html msg
 view config state data =
     table []
-        [ tableHeadView config state
+        [ --div [ property "innerHTML" (JSEncode.string "<strong>test</strong>") ] [ ]
+          tableHeadView config state
         , tableBodyView config state data
         ]
 
@@ -135,6 +138,24 @@ onClose hiddenColumn toMsg state =
         Events.on "click" <|  Json.map toMsg <| Json.succeed newState
 
 
+onFilter : String -> (State -> msg) -> State -> Attribute msg
+onFilter colName toMsg state =
+    let
+        filterDict = Dict.fromList state.filters
+
+        newFilters search = 
+            Dict.insert colName search filterDict
+                |> Dict.toList
+
+        newState search =
+            { state | filters = (newFilters search) }
+
+        newToMsg = toMsg << newState            
+            
+    in
+        Events.on "input" <|  Json.map newToMsg Events.targetValue
+
+
 onSort : String -> (State -> msg) -> State -> Attribute msg
 onSort columnName toMsg state =
     let
@@ -155,9 +176,9 @@ tableHeadView : ViewConfig data msg -> State -> Html msg
 tableHeadView { columns, canHide, canSort, canFilter, toMsg } state =
     let
         { hiddenColumns, sortBy, sortOrder } = state
-        closeButton colName =
+        closeButton col =
             if canHide then
-                i [ class "fa fa-close", onClose colName toMsg state ] [ text "X" ]
+                i [ class "fa fa-close", onClose col.name toMsg state ] [ text "X" ]
             else
                 text ""
 
@@ -181,19 +202,19 @@ tableHeadView { columns, canHide, canSort, canFilter, toMsg } state =
                 else
                     text ""
 
-        inputBox =
+        inputBox col =
             if canFilter then
-                input [] []
+                input [ onFilter col.name toMsg state ] []
             else
                 text ""
 
         toTh col =
             th []
-                [ closeButton col.name
+                [ closeButton col
                 , text col.name
                 , sortButton col
                 , br [] []
-                , inputBox
+                , inputBox col
                 ]
 
         ths =
