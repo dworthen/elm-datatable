@@ -6,6 +6,8 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Table as Table
 import String
+import Dict exposing (Dict(..))
+import Array
 
 
 -- MAIN
@@ -23,6 +25,8 @@ type alias Model =
     { name : String
     , tableState : Table.State
     , presidents : List Person
+    , presidentsTuples : List (PersonTuples String Int)
+    , presidentsList : List PersonList
     }
 
 
@@ -31,7 +35,7 @@ model =
     let
         tableState = Table.State "Name" Table.Asc [] []
     in
-        Model "Derek" tableState presidents
+        Model "Derek" tableState presidents presidentsTuples presidentsList
 
 
 init : ( Model, Cmd Msg )
@@ -74,7 +78,10 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ Table.view tableViewConfig model.tableState model.presidents ]
+        [ Table.view tableViewConfig model.tableState model.presidents
+        , Table.view tableViewConfigTuples model.tableState model.presidentsTuples
+        , Table.view tableViewConfigList model.tableState model.presidentsList 
+        ]
 
 
 
@@ -89,9 +96,9 @@ tableViewConfig =
         , Table.stringColumn "City" .city Nothing
         , Table.stringColumn "State" .state Nothing
         ]
-    , canHide = True
-    , canSort = True
-    , canFilter = True
+    , canHide = (True, "Close Me")
+    , canSort = (True, "Sort")
+    , canFilter = (True, "Search")
     , toMsg = UpdateTableState
     }
 
@@ -149,4 +156,65 @@ presidents =
     , Person "George W. Bush" 1946 "New Haven" "Connecticut"
     , Person "Bill Clinton" 1946 "Hope" "Arkansas"
     , Person "Barack Obama" 1961 "Honolulu" "Hawaii"
+    ]
+
+
+tableViewConfigTuples : Table.ViewConfig (PersonTuples String Int) Msg
+tableViewConfigTuples =
+    { columns =
+        [ Table.intColumn "Year" (snd) Nothing
+        , Table.stringColumn "Name" (fst) Nothing 
+        ]
+    , canHide = (True, "Close Me")
+    , canSort = (True, "Sort")
+    , canFilter = (True, "Search")
+    , toMsg = UpdateTableState
+    }
+
+
+type alias PersonTuples a b =
+    (a, b)
+
+
+presidentsTuples : List (PersonTuples String Int)
+presidentsTuples =
+    [ ("George Washington", 1732)
+    , ("John Adams", 1735)
+    , ("Thomas Jefferson", 1743)
+    , ("Ander Jackson", 1767)
+    ]
+
+
+tableViewConfigList : Table.ViewConfig PersonList Msg
+tableViewConfigList =
+    { columns =
+        [ Table.stringColumn "Year" (getListItem 1) Nothing
+        , Table.stringColumn "Name" (getListItem 0) <| Just (\c -> strong [] [ text <| getListItem 0 c ]) 
+        ]
+    , canHide = (True, "Close Me")
+    , canSort = (True, "Sort")
+    , canFilter = (True, "Search")
+    , toMsg = UpdateTableState
+    }
+
+
+type alias PersonList =
+    List String
+
+
+getListItem : Int -> List String -> String
+getListItem ind items =
+    items
+        |> Array.fromList
+        |> Array.get ind
+        |> Maybe.withDefault ""
+
+
+presidentsList : List PersonList
+presidentsList =
+    [ ["George Washington", "1732"]
+    , ["John Adams", "1735"]
+    , ["Thomas Jefferson", "1743"]
+    , ["Ander Jackson", "1767"]
+    , ["William Henry Harrison", "1773"]
     ]
